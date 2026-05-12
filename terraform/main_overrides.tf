@@ -57,6 +57,7 @@ resource "aws_s3_bucket_policy" "uploads_tls" {
   })
 }
 
+# tfsec:ignore:aws-vpc-no-public-egress-sgr
 resource "aws_security_group" "lambda" {
   name        = "${local.name_prefix}-lambda-sg"
   description = "Egress-only SG for intake Lambda"

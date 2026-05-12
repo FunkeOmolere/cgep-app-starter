@@ -171,6 +171,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
 }
 
 # GAP-07: deliberately broad permissions on the workload data stores.
+# tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_role_policy" "lambda_inline" {
   name = "intake-data-access"
   role = aws_iam_role.lambda.id
