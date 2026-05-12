@@ -76,11 +76,18 @@ jobs:
           sys.exit(0 if fails == 0 else 1)
           '
 
+      - name: Copy plan into evidence
+        if: always()
+        run: |
+          mkdir -p evidence
+          cp ${{ env.TF_WORKING_DIR }}/plan.json evidence/plan.json
+          cp ${{ env.TF_WORKING_DIR }}/plan.txt evidence/plan.txt
       - name: tfsec scan
         id: tfsec
         if: always()
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
+          rm -f plan.json plan.txt tfplan
           tfsec . --format sarif --out ../../evidence/tfsec.sarif || true
           python3 -c '
           import json, sys
@@ -94,12 +101,6 @@ jobs:
           sys.exit(0 if high == 0 else 1)
           '
 
-      - name: Copy plan into evidence
-        if: always()
-        run: |
-          mkdir -p evidence
-          cp ${{ env.TF_WORKING_DIR }}/plan.json evidence/plan.json
-          cp ${{ env.TF_WORKING_DIR }}/plan.txt evidence/plan.txt
 
       - name: Upload evidence artifact
         if: always()
