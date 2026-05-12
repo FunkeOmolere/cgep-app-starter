@@ -1,4 +1,21 @@
+# tfsec suppressions for Acme Health workload (CGE-P Capstone Layer 1).
+# Each exclusion is a deliberate architectural choice, not an unfixed gap.
+# Reviewed and documented in WRITEUP.md.
+
 exclude:
-  - AVD-AWS-0086
-  - AVD-AWS-0087
-  - AVD-AWS-0132
+  # AVD-AWS-0104: Security group egress to 0.0.0.0/0.
+  # Justification: Lambda is inside the VPC (closes GAP-05) and needs to
+  # reach AWS service endpoints (DynamoDB, S3, KMS, SQS, CloudWatch) over
+  # HTTPS port 443. VPC endpoints are Lab 5.2 scope and not yet wired.
+  # Egress is restricted to 443/tcp only (not all ports).
+  # SOC 2 CC6.6 / NIST SC-7 — accepted with compensating control.
+  - AVD-AWS-0104
+
+  # AVD-AWS-0057: IAM policy uses s3:PutObject on bucket/* resource pattern.
+  # Justification: The intake Lambda must write user submissions to S3 with
+  # dynamically-generated object keys. Object-prefix wildcards are the
+  # AWS-recommended least-privilege pattern for this access pattern (cf.
+  # AWS Well-Architected Security pillar, IAM best practic  # AWS Well-Architected Security pillar, IAM best proning, PAB, TLS-deny policy).
+  # SOC 2 CC6.3 / NIST AC-6 — accepted: least privilege at action level,
+  # wildcard scoped to one bucket prefix only.
+  - AVD-AWS-0057
