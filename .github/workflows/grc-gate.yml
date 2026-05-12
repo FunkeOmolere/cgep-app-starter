@@ -54,22 +54,22 @@ jobs:
         id: conftest
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
-          mkdir -p ../../evidence
+          mkdir -p ../evidence
           {
             echo "["
             FIRST=1
             for ns in compliance.sc28_aws compliance.ac3_aws compliance.cm6_aws compliance.cm6; do
               [[ $FIRST -eq 1 ]] && FIRST=0 || printf ","
-              conftest test --policy ../../policies --namespace "$ns" --output=json plan.json || true
+              conftest test --policy ../policies --namespace "$ns" --output=json plan.json || true
             done
             echo "]"
-          } > ../../evidence/conftest-results.json
+          } > ../evidence/conftest-results.json
           python3 -c '
           import json, sys
           import os
-          f = "../../evidence/conftest-results.json"
+          f = "../evidence/conftest-results.json"
           if not os.path.exists(f) or os.path.getsize(f) == 0:
-          sys.exit(0)
+              sys.exit(0)
           d = json.load(open(f))
           fails = sum(len(r.get("failures") or []) for results in d for r in (results if isinstance(results, list) else [results]))
           print(f"conftest failures: {fails}")
@@ -88,10 +88,10 @@ jobs:
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
           rm -f plan.json plan.txt tfplan
-          tfsec . --format sarif --out ../../evidence/tfsec.sarif || true
+          tfsec . --format sarif --out ../evidence/tfsec.sarif || true
           python3 -c '
           import json, sys
-          d = json.load(open("../../evidence/tfsec.sarif"))
+          d = json.load(open("../evidence/tfsec.sarif"))
           high = sum(
               1 for run in d.get("runs", [])
               for r in run.get("results", [])
