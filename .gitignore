@@ -16,3 +16,12 @@ terraform/lambda/handler.zip
 evidence/
 .DS_Store
 terraform/main.tf.bak
+
+# Plan artifacts (created by terraform plan, scanned by Conftest)
+plan.json
+plan.txt
+**/plan.json
+**/plan.txt
+
+# Catch .terraform/ anywhere in repo, not just root
+**/.terraform/
