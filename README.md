@@ -1,80 +1,81 @@
-# cgep-app-starter
+# CGE-P Capstone — Patient Intake API GRC Pipeline
 
-> Patient Intake API for "Acme Health". The deliberately-flawed workload your **CGE-P capstone** wraps with GRC controls.
+A working policy-as-code pipeline for a HIPAA/SOC 2 scoped serverless workload. Built as the capstone project for the GRC Engineering Practitioner program.
 
 ## What this is
 
-A minimal AWS workload: VPC, Lambda, API Gateway, DynamoDB, S3. It ingests patient intake submissions over HTTPS. Think of it as a system you have just inherited from an engineering team and been asked to make audit-defensible.
+The starter ships an intentionally non-compliant patient intake API (`terraform/main.tf` — "Acme Health") with 8 named compliance gaps in `GAPS.md`. This repo closes those gaps in Terraform, detects regressions with Rego policies, and produces evidence on every PR.
 
-This repository ships **non-compliant on purpose**. Your job in the capstone is not to rewrite this app. Your job is to wrap it with the four CGE-P layers (Terraform GRC baseline, Rego policies, GitHub Actions evidence pipeline, OSCAL component) so the same workload becomes audit-defensible against HIPAA, SOC 2, and CMMC L2.
+**Framework chosen:** SOC 2 Type II (with mappings to NIST 800-53 and HIPAA).
 
-## The deploy gate
+## Learning in public
 
-If you cannot deploy this starter, you cannot pass the capstone. Real GRC engineers inherit working systems. Step zero is making the system run.
+I am new to GRC engineering. This repo is intentionally a record of the journey, including dead ends, suppressed findings with documented justifications, and an open `LESSONS-LEARNED.md`. If you are starting out, that document is probably more useful to you than the Terraform itself.
+
+## Control coverage
+
+| TSC    | NIST 800-53 | Implemented in           | Detected by                  |
+|--------|-------------|--------------------------|------------------------------|
+| CC6.1  | SC-28       | KMS CMK + SSE-KMS        | `sc28_encryption_aws.rego`   |
+| CC6.3  | AC-6        | Scoped IAM policy        | (Layer 1 only)               |
+| CC6.6  | AC-3, SC-7  | S3 PAB, Lambda in VPC    | `ac3_no_public_aws.rego`     |
+| CC6.7  | SC-8        | S3 TLS-deny policy       | (Layer 1 only)               |
+| CC6.8  | CM-6        | `default_tags` on provider | `cm6_required_tags_aws.rego` |
+| CC7.2  | AU-2, SI-11 | API GW logs, DLQ, X-Ray  | (Layer 1 only)               |
+| A1.2   | CP-9        | S3 versioning            | (Layer 1 only)               |
+
+## Gap closure status
+
+| Gap     | Closed by             | Resource                                          |
+|---------|-----------------------|---------------------------------------------------|
+| GAP-01  | `main_overrides.tf`   | S3 SSE-KMS configuration                          |
+| GAP-02  | `main.tf` (inline)    | DynamoDB SSE with customer CMK                    |
+| GAP-03  | `main_overrides.tf`   | S3 bucket policy denying non-TLS requests         |
+| GAP-04  | `main_overrides.tf`   | S3 versioning                                     |
+| GAP-05  | `main.tf` (inline)    | Lambda `vpc_config` block                         |
+| GAP-06  | `main.tf` (inline)    | Lambda DLQ + reserved concurrency + X-Ray         |
+| GAP-07  | `main.tf` (inline)    | IAM scoped to least-privilege actions             |
+| GAP-08  | `main.tf` + overrides | API Gateway access logs + throttling              |
+
+## Status
+
+- [x] Layer 1 — Terraform baseline + all 8 gaps closed
+- [x] Layer 2 — Rego policy library (3 policies + AWS variants, 8/8 tests passing)
+- [x] Layer 3 — Pipeline with OIDC, Conftest gate, evidence upload
+- [x] Red PR + Green PR in repo history
+- [ ] 2 additional Rego policies (CC6.7 TLS, CC6.6 Lambda-in-VPC)
+- [ ] Cosign signing of evidence bundle (Lab 4.4)
+- [ ] CloudTrail baseline (Lab 5.2)
+- [ ] Layer 4 — OSCAL component definition
+- [ ] `WRITEUP.md`
+
+## Trade-offs and accepted findings
+
+Two tfsec findings are suppressed via inline `# tfsec:ignore:` comments with justifications:
+
+- **`aws-vpc-no-public-egress-sgr`** — Lambda SG egress to `0.0.0.0/0:443`. Required for AWS API access until VPC endpoints land (Lab 5.2 scope).
+- **`aws-iam-no-policy-wildcards`** — `s3:PutObject` on `bucket/*`. AWS-recommended pattern for workload Lambdas with dynamic object keys.
+
+Per the capstone overview, tfsec is informational only (not on the Tier 0 grading list). Conftest is the policy gate.
+
+## Verification
 
 ```bash
-git clone https://github.com/GRCEngClub/cgep-app-starter
-cd cgep-app-starter
+cd terraform
+terraform init
+terraform validate
+terraform plan -out=tfplan
+terraform show -json tfplan > plan.json
 
-# Confirm you're authenticated to the right account:
-make creds AWS_PROFILE=<your-sandbox-profile>
-
-make deploy AWS_PROFILE=<your-sandbox-profile>
-make test    AWS_PROFILE=<your-sandbox-profile>
+for ns in compliance.sc28_aws compliance.ac3_aws compliance.cm6_aws; do
+  conftest test --policy ../policies --namespace "$ns" plan.json
+done
 ```
 
-> **AWS SSO note:** if your profile is SSO-based, Terraform's AWS provider can fail to read it directly with `failed to find SSO session section`. The Makefile's `eval $(aws configure export-credentials)` pattern handles this. If you're running `terraform` commands by hand, do the same export first.
+## Credits
 
-Expected output of `make test`:
-
-```json
-{
-    "submission_id": "f1e3...",
-    "status": "received"
-}
-```
-
-When you're done exploring: `make destroy`.
-
-## What you build on top
-
-Fork the repo into your own `cgep-capstone` and add:
-
-1. **Layer 1 — GRC baseline (Terraform).** KMS keys, an S3 evidence vault with Object Lock, a CloudTrail trail. Bring this starter's data stores under your CMK.
-2. **Layer 2 — OPA policy suite (Rego).** Five or more policies that catch the named gaps in [GAPS.md](GAPS.md). Each policy maps to at least one control from the framework you choose.
-3. **Layer 3 — GitHub Actions pipeline.** Plan → Conftest gate → apply → Cosign sign → upload to vault.
-4. **Layer 4 — OSCAL component.** A `component-definition.json` describing how your governed system implements its controls.
-
-Full brief: `docs/labs/07_01_capstone_brief.md` in the course content repo.
-
-## Framework mapping is required
-
-Your capstone must declare a primary framework: **HIPAA Security Rule**, **SOC 2 Trust Services Criteria**, or **CMMC Level 2**. Every policy carries at least one control ID from your chosen framework. Your OSCAL component's `control-implementations` reference your framework's catalog.
-
-A starter mapping is in [FRAMEWORKS.md](FRAMEWORKS.md). It is not the only valid mapping. You're expected to defend yours.
-
-## Cost
-
-Roughly $0 if destroyed within an hour. Lambda + API Gateway + DynamoDB + S3 are all pay-per-use, and an empty deployment generates no traffic. CloudTrail (which you add) costs cents.
-
-## Layout
-
-```
-cgep-app-starter/
-├── README.md            # this file
-├── WORKLOAD.md          # what the API does
-├── GAPS.md              # the named flaws your policies must catch
-├── FRAMEWORKS.md        # HIPAA / SOC 2 / CMMC mapping primer
-├── Makefile             # make deploy | test | destroy
-├── terraform/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   └── lambda/handler.py
-└── test/
-    └── intake.sh
-```
+Forked from the GRC Engineering Club (grcengclub.com) CGE-P capstone starter. The Acme Health workload, GAPS.md, and lab structure are theirs; the gap closures, Rego policies, CI pipeline, and write-up are mine.
 
 ## License
 
-MIT. Fork freely. Submissions remain learners' own work.
+MIT
