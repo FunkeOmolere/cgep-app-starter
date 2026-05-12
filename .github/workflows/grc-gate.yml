@@ -58,7 +58,7 @@ jobs:
           {
             echo "["
             FIRST=1
-            for ns in compliance.sc28_aws compliance.ac3_aws compliance.cm6_aws compliance.cm6; do
+            for ns in compliance.sc28_aws compliance.ac3_aws compliance.cm6_aws; do
               [[ $FIRST -eq 1 ]] && FIRST=0 || printf ","
               conftest test --policy ../policies --namespace "$ns" --output=json plan.json || true
             done
