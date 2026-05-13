@@ -1,0 +1,95 @@
+{
+  "component-definition": {
+    "uuid": "ef76d832-b51a-45b1-9d6a-c431071c8bb3",
+    "metadata": {
+      "title": "Acme Health Patient Intake API GRC Controls",
+      "last-modified": "2026-05-13T00:00:00.000000+00:00",
+      "version": "1.0.0",
+      "oscal-version": "1.1.3",
+      "parties": [
+        {
+          "uuid": "5db18123-66e5-4f28-ba71-1232e3b2ccd6",
+          "type": "organization",
+          "name": "FunkeOmolere"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "310f54bc-072a-4c72-9876-90b6e018cd19",
+        "type": "software",
+        "title": "Acme Health Patient Intake API",
+        "description": "Serverless patient intake API on AWS comprising S3, DynamoDB, Lambda, and API Gateway. Gap-closed via Terraform overrides and governed by a Rego policy suite and GitHub Actions pipeline.",
+        "purpose": "Provide a compliant-by-default patient intake workload satisfying SOC 2 Type II Trust Services Criteria.",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["5db18123-66e5-4f28-ba71-1232e3b2ccd6"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "5ef5f937-abcb-4073-b765-af3002eab56e",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST 800-53 Rev 5 controls implemented by the Acme Health intake workload.",
+            "implemented-requirements": [
+              {
+                "uuid": "885ae494-d9c8-461b-af07-8b260a838f31",
+                "control-id": "sc-28",
+                "description": "S3 uploads bucket encrypted with customer-managed KMS key via aws_s3_bucket_server_side_encryption_configuration. DynamoDB table encrypted with CMK via server_side_encryption block. KMS key has rotation enabled.",
+                "props": [
+                  {"name": "implementation-status", "value": "implemented"},
+                  {"name": "terraform-resource", "value": "aws_s3_bucket_server_side_encryption_configuration.uploads"},
+                  {"name": "terraform-resource", "value": "aws_dynamodb_table.intake"},
+                  {"name": "rego-policy", "value": "policies/sc28_encryption_aws.rego"}
+                ],
+                "links": [
+                  {
+                    "rel": "evidence",
+                    "href": "s3://cgep-lab-grc-evidence-vault-72cfa176/runs/test-001/",
+                    "text": "Signed pipeline evidence bundle containing terraform plan.json and conftest results."
+                  }
+                ]
+              },
+              {
+                "uuid": "88a4e161-df46-4ada-9ab0-2aee2cd48f6f",
+                "control-id": "ac-3",
+                "description": "S3 public access block enforced via aws_s3_bucket_public_access_block. Lambda deployed in VPC with security group restricting egress to port 443 only. IAM policy scoped to least-privilege actions.",
+                "props": [
+                  {"name": "implementation-status", "value": "implemented"},
+                  {"name": "terraform-resource", "value": "aws_s3_bucket_public_access_block.uploads"},
+                  {"name": "terraform-resource", "value": "aws_lambda_function.intake"},
+                  {"name": "rego-policy", "value": "policies/ac3_no_public_aws.rego"}
+                ],
+                "links": [
+                  {
+                    "rel": "evidence",
+                    "href": "s3://cgep-lab-grc-evidence-vault-72cfa176/runs/test-001/",
+                    "text": "Signed pipeline evidence bundle."
+                  }
+                ]
+              },
+              {
+                "uuid": "c88e5e47-015d-4e33-a709-c04d330a179a",
+                "control-id": "cm-6",
+                "description": "Required compliance tags enforced via provider default_tags block: Project, ManagedBy, Workload, DataClass, ComplianceScope, Environment. All resources inherit via tags_all.",
+                "props": [
+                  {"name": "implementation-status", "value": "implemented"},
+                  {"name": "terraform-resource", "value": "provider.aws.default_tags"},
+                  {"name": "rego-policy", "value": "policies/cm6_required_tags_aws.rego"}
+                ],
+                "links": [
+                  {
+                    "rel": "evidence",
+                    "href": "s3://cgep-lab-grc-evidence-vault-72cfa176/runs/test-001/",
+                    "text": "Signed pipeline evidence bundle."
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
