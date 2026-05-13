@@ -79,4 +79,4 @@ Cut scope early if you need to. Five things done well beats eight things
 half-done. The capstone says this explicitly. I wish I had listened sooner.
 
 The learning curve is real. Some things will break multiple times.
-That is not failure. That is the process.
+That is not failure. That is the process.# Cosign signing test
