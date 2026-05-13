@@ -80,3 +80,4 @@ half-done. The capstone says this explicitly. I wish I had listened sooner.
 
 The learning curve is real. Some things will break multiple times.
 That is not failure. That is the process.# Cosign signing test
+# Final verification run
