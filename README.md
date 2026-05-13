@@ -62,11 +62,11 @@ I am new to GRC engineering. This repo is intentionally a record of the journey,
 - [x] Layer 2 — Rego policy library (3 policies + AWS variants, 8/8 tests passing)
 - [x] Layer 3 — Pipeline with OIDC, Conftest gate, evidence upload
 - [x] Red PR + Green PR in repo history (#1 red, #2 green)
-- [ ] 2 additional Rego policies (CC6.7 TLS, CC6.6 Lambda-in-VPC)
-- [ ] Cosign signing of evidence bundle (Lab 4.4)
-- [ ] CloudTrail baseline (Lab 5.2)
-- [ ] Layer 4 — OSCAL component definition
-- [ ] `WRITEUP.md`
+- [x] 2 additional Rego policies (CC6.7 TLS, CC6.6 Lambda-in-VPC)
+- [x] Cosign signing of evidence bundle (Lab 4.4)
+- [ ] CloudTrail baseline (Lab 5.2 — future sprint)
+- [x] Layer 4 — OSCAL component definition
+- [x] WRITEUP.md
 
 ## Trade-offs and accepted findings
 
