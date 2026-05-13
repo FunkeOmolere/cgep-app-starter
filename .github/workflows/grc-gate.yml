@@ -42,7 +42,7 @@ jobs:
           curl -fsSL https://github.com/aquasecurity/tfsec/releases/download/v1.28.14/tfsec-linux-amd64 \
             -o /usr/local/bin/tfsec && chmod +x /usr/local/bin/tfsec
 
-     - name: Install Cosign
+      - name: Install Cosign
         uses: sigstore/cosign-installer@v3
         with:
           cosign-release: 'v2.2.4'
