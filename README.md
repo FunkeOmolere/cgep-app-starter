@@ -37,12 +37,31 @@ I am new to GRC engineering. This repo is intentionally a record of the journey,
 | GAP-07  | `main.tf` (inline)    | IAM scoped to least-privilege actions             |
 | GAP-08  | `main.tf` + overrides | API Gateway access logs + throttling              |
 
+## Repository layout
+
+.
+├── .github/workflows/grc-gate.yml
+├── .tfsec/config.yml
+├── oidc/
+├── policies/
+│   ├── sc28_encryption.rego
+│   ├── ac3_no_public.rego
+│   ├── cm6_required_tags.rego
+│   └── tests/
+├── terraform/
+│   ├── main.tf
+│   ├── main_overrides.tf
+│   └── primitives/
+├── GAPS.md
+├── LESSONS-LEARNED.md
+└── WRITEUP.md
+
 ## Status
 
 - [x] Layer 1 — Terraform baseline + all 8 gaps closed
 - [x] Layer 2 — Rego policy library (3 policies + AWS variants, 8/8 tests passing)
 - [x] Layer 3 — Pipeline with OIDC, Conftest gate, evidence upload
-- [x] Red PR + Green PR in repo history
+- [x] Red PR + Green PR in repo history (#1 red, #2 green)
 - [ ] 2 additional Rego policies (CC6.7 TLS, CC6.6 Lambda-in-VPC)
 - [ ] Cosign signing of evidence bundle (Lab 4.4)
 - [ ] CloudTrail baseline (Lab 5.2)
@@ -57,7 +76,13 @@ Two tfsec findings are suppressed via inline `# tfsec:ignore:` comments with jus
 - **`aws-iam-no-policy-wildcards`** — `s3:PutObject` on `bucket/*`. AWS-recommended pattern for workload Lambdas with dynamic object keys.
 
 Per the capstone overview, tfsec is informational only (not on the Tier 0 grading list). Conftest is the policy gate.
+## Prerequisites
 
+- Terraform >= 1.6
+- OPA + Conftest (for policy evaluation)
+- tfsec (for security scanning, informational)
+- AWS CLI configured with credentials to a sandbox account
+- (Optional) Cosign for evidence bundle signing
 ## Verification
 
 ```bash
