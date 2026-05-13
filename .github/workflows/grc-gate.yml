@@ -87,6 +87,7 @@ jobs:
           mkdir -p evidence
           cp ${{ env.TF_WORKING_DIR }}/plan.json evidence/plan.json
           cp ${{ env.TF_WORKING_DIR }}/plan.txt evidence/plan.txt
+
       - name: tfsec scan
         id: tfsec
         if: always()
@@ -105,7 +106,8 @@ jobs:
           print(f"tfsec high+critical: {high} (informational only — Conftest is the gate)")
           sys.exit(0)
           '
-- name: Bundle sign and upload to vault
+
+      - name: Bundle sign and upload to vault
         if: always()
         env:
           VAULT: ${{ vars.EVIDENCE_VAULT }}
@@ -122,16 +124,7 @@ jobs:
           aws s3 cp "${BUNDLE}.sha256"     "s3://${VAULT}/${KEY_PREFIX}/${BUNDLE}.sha256"
           aws s3 cp "${BUNDLE}.sig.bundle" "s3://${VAULT}/${KEY_PREFIX}/${BUNDLE}.sig.bundle"
           VERSION_ID=$(aws s3api head-object --bucket "${VAULT}" --key "${KEY_PREFIX}/${BUNDLE}" --query VersionId --output text)
-          cat > receipt.json << RECEIPTEOF
-          {
-            "run_id":"${RUN_ID}",
-            "vault":"${VAULT}",
-            "bundle_key":"${KEY_PREFIX}/${BUNDLE}",
-            "version_id":"${VERSION_ID}",
-            "sha256":"$(cat ${BUNDLE}.sha256)",
-            "commit":"${SHA}"
-          }
-          RECEIPTEOF
+          echo "{\"run_id\":\"${RUN_ID}\",\"vault\":\"${VAULT}\",\"bundle_key\":\"${KEY_PREFIX}/${BUNDLE}\",\"version_id\":\"${VERSION_ID}\",\"commit\":\"${SHA}\"}" > receipt.json
           aws s3 cp receipt.json "s3://${VAULT}/${KEY_PREFIX}/receipt.json"
 
       - name: Upload evidence artifact
